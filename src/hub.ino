@@ -18,11 +18,11 @@ RF24 radio(CE, CSN);
 
 const byte address[10] = "minion";
 
-struct minionPayload
+struct MinionPayload
 {
-    int16_t minionId;
-    int16_t minionStatus;
-} payload;
+    char minionId[11];
+    char status[4];
+};
 
 void setup()
 {
@@ -137,27 +137,23 @@ void loop()
     }
 
     // Decode JSON/Extract values
-    payload.minionId = jsonDocument["minionId"];
-    payload.minionStatus = strcmp("on", jsonDocument["status"]) == 0 ? 1 : 0;
+    MinionPayload payload;
+    strcpy(payload.minionId, jsonDocument["minionId"]);
+    strcpy(payload.status, jsonDocument["status"]);
     transmitToMinion(&payload);
 }
 
-void transmitToMinion(minionPayload *payload)
+void transmitToMinion(MinionPayload *payload)
 {
-    if (payload->minionId < 0)
-    {
-        Serial.println("Illegal payload. Minion does not exist");
-        return;
-    }
     radio.openWritingPipe(address);
     char buffer[100];
     if (radio.write(payload, sizeof(*payload)))
     {
-        sprintf(buffer, "Successfully transmitted to minion: %d, status: %d", payload->minionId, payload->minionStatus);
+        sprintf(buffer, "Successfully transmitted to minion: %s", payload->minionId);
     }
     else
     {
-        sprintf(buffer, "Something went wrong while transmitting to minion: %d", payload->minionId);
+        sprintf(buffer, "Something went wrong while transmitting to minion: %s", payload->minionId);
     }
     Serial.println(buffer);
 }
