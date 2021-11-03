@@ -3,9 +3,16 @@
 #define CE 9
 #define CSN 10
 #define LED 2
+#define DEVICE_ID 1
 
 RF24 radio(CE, CSN);
-const uint64_t address = 0xE6E6E6E6E6E6;
+const byte address[10] = "minion";
+
+struct minionPayload
+{
+    int16_t minionId;
+    int16_t minionStatus;
+} payload;
 
 void setup()
 {
@@ -33,20 +40,15 @@ void loop()
 {
     radio.startListening();
     Serial.println("Listening....");
-    // char status[10];
+
     if (radio.available())
     {
-        while (radio.available())
-        {
-            Serial.println("Received a message :)");
-            // uint8_t bytes = radio.getPayloadSize();
-            int statusInt;
-            radio.read(&statusInt, sizeof(statusInt));
-            char buffer[100];
-            sprintf(buffer, "Received status: %d", statusInt);
-            Serial.println(buffer);
-            handleStatus(statusInt);
-        }
+        Serial.println("Received a message :)");
+        radio.read(&payload, sizeof(payload));
+        char buffer[100];
+        sprintf(buffer, "Received status: id: %d, status: %d", payload.minionId, payload.minionStatus);
+        Serial.println(buffer);
+        handlePayload(&payload);
     }
     else
     {
@@ -55,9 +57,14 @@ void loop()
     delay(1000);
 }
 
-void handleStatus(int statusInt)
+void handlePayload(minionPayload *payload)
 {
-    if (statusInt == 1)
+    if (payload->minionId != DEVICE_ID)
+    {
+        Serial.println("Not meant for me. Ignoring...");
+        return;
+    }
+    if (payload->minionStatus == 1)
     {
         Serial.println("Turning LED on.");
         digitalWrite(LED, HIGH);

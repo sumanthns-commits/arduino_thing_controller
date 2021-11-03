@@ -16,7 +16,13 @@ const char fingerprint[] PROGMEM = "d82078fa397475dd82bd517b4efacde4ba00b4d7";
 const String thingID = "1";
 RF24 radio(CE, CSN);
 
-const uint64_t address = 0xE6E6E6E6E6E6;
+const byte address[10] = "minion";
+
+struct minionPayload
+{
+    int16_t minionId;
+    int16_t minionStatus;
+} payload;
 
 void setup()
 {
@@ -131,31 +137,27 @@ void loop()
     }
 
     // Decode JSON/Extract values
-    Serial.println(F("Response:"));
-    Serial.println(jsonDocument["minionId"].as<int>());
-    Serial.println(jsonDocument["status"].as<char *>());
-
-    const char *status = jsonDocument["status"];
-    const int minionId = jsonDocument["minionId"].as<int>();
-    transmitToThing(minionId, status);
+    payload.minionId = jsonDocument["minionId"];
+    payload.minionStatus = strcmp("on", jsonDocument["status"]) == 0 ? 1 : 0;
+    transmitToMinion(&payload);
 }
 
-void transmitToThing(const int minionId, const char status[])
+void transmitToMinion(minionPayload *payload)
 {
-    radio.openWritingPipe(address);
-    int statusInt = 0;
-    if (strcmp(status, "on") == 0)
+    if (payload->minionId < 0)
     {
-        statusInt = 1;
+        Serial.println("Illegal payload. Minion does not exist");
+        return;
     }
+    radio.openWritingPipe(address);
     char buffer[100];
-    if (radio.write(&statusInt, sizeof(statusInt)))
+    if (radio.write(payload, sizeof(*payload)))
     {
-        sprintf(buffer, "Successfully transmitted to minion: %d, status: %s", minionId, status);
+        sprintf(buffer, "Successfully transmitted to minion: %d, status: %d", payload->minionId, payload->minionStatus);
     }
     else
     {
-        sprintf(buffer, "Something went wrong while transmitting to minion: %d", minionId);
+        sprintf(buffer, "Something went wrong while transmitting to minion: %d", payload->minionId);
     }
     Serial.println(buffer);
 }
