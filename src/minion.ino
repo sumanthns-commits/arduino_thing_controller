@@ -2,7 +2,7 @@
 
 #define CE 9
 #define CSN 10
-#define LED 2
+#define RELAY 2
 
 const char *MINION_ID = "r2F9p4RzR1"; // MINION_ID registered
 const byte address[10] = "minion";
@@ -34,7 +34,8 @@ void setup()
     radio.setPALevel(RF24_PA_LOW);
     radio.openReadingPipe(1, address);
 
-    pinMode(LED, OUTPUT);
+    pinMode(RELAY, OUTPUT);
+    digitalWrite(RELAY, HIGH); // Keep Relay off by default
 }
 
 void loop()
@@ -67,14 +68,19 @@ void handlePayload(MinionPayload *payload)
         return;
     }
 
+    // RELAY turns on with a LOW. Turns off with a HIGH
     if (strcmp(payload->status, "on") == 0)
     {
-        Serial.println("Turning LED on.");
-        digitalWrite(LED, HIGH);
+        Serial.println("Turning RELAY on.");
+        digitalWrite(RELAY, LOW);
+    }
+    else if (strcmp(payload->status, "off") == 0)
+    {
+        Serial.println("Turning RELAY off.");
+        digitalWrite(RELAY, HIGH);
     }
     else
     {
-        Serial.println("Turning LED off.");
-        digitalWrite(LED, LOW);
+        Serial.println("Unknown status. Ignoring...");
     }
 }
