@@ -12,7 +12,7 @@ const char *ssid = "";     // The SSID (name) of the Wi-Fi network you want to c
 const char *password = ""; // The password of the Wi-Fi network
 const char *host = "617e775c2ff7e600174bd7ed.mockapi.io";
 const int httpsPort = 443;
-const char fingerprint[] PROGMEM = "d82078fa397475dd82bd517b4efacde4ba00b4d7";
+const char fingerprint[] PROGMEM = "8e8aacf631330e167d919d35c3a6454893a7f1e1";
 const String thingID = "1";
 RF24 radio(CE, CSN);
 
